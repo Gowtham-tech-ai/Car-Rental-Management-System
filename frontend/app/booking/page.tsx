@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -22,7 +23,7 @@ import {
   getCarById,
 } from "@/lib/api";
 
-export default function BookingPage() {
+function BookingContent() {
   const searchParams = useSearchParams();
 
   const carId = Number(searchParams.get("carId"));
@@ -672,5 +673,26 @@ export default function BookingPage() {
 
       </div>
     </section>
+  );
+}
+
+export default function BookingPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="booking-page">
+          <div className="booking-container">
+            <div className="booking-loading-card">
+              <div className="booking-skeleton booking-skeleton-title" />
+              <div className="booking-skeleton booking-skeleton-line" />
+              <div className="booking-skeleton booking-skeleton-line" />
+              <div className="booking-skeleton booking-skeleton-box" />
+            </div>
+          </div>
+        </main>
+      }
+    >
+      <BookingContent />
+    </Suspense>
   );
 }

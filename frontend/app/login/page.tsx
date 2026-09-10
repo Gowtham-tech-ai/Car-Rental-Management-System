@@ -1,39 +1,47 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { Eye, EyeOff, Lock, Mail, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  ArrowRight,
-  CarFront,
-  Check,
-  Eye,
-  EyeOff,
-  LockKeyhole,
-  Mail,
-  ShieldCheck,
-} from "lucide-react";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const redirectPath =
-    searchParams.get("redirect") || "";
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>
-  ) {
-    event.preventDefault();
+  const redirectPath = searchParams.get("redirect");
+
+  useEffect(() => {
+    const token = localStorage.getItem("driveease_token");
+    const storedUser = localStorage.getItem("driveease_user");
+
+    if (token && storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+
+        if (user.role === "admin") {
+          router.replace("/admin");
+        } else {
+          router.replace("/dashboard");
+        }
+      } catch {
+        localStorage.removeItem("driveease_token");
+        localStorage.removeItem("driveease_user");
+      }
+    }
+  }, [router]);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
 
     setError("");
 
@@ -45,42 +53,32 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch(
-        `${API_URL}/auth/login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: email.trim(),
-            password,
-          }),
-        }
-      );
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+        }),
+      });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message || "Invalid email or password"
-        );
+        throw new Error(data.message || "Invalid email or password.");
       }
 
-      localStorage.setItem(
-        "driveease_token",
-        data.token
-      );
-
+      localStorage.setItem("driveease_token", data.token);
       localStorage.setItem(
         "driveease_user",
         JSON.stringify(data.user)
       );
 
       /*
-       * Preserve redirect destination when one exists.
-       * Example:
-       * /login?redirect=/booking?carId=5
+       * If the user came from booking, return them there.
+       * Otherwise use the normal role-based destination.
        */
       if (redirectPath) {
         router.push(redirectPath);
@@ -93,7 +91,7 @@ export default function LoginPage() {
       setError(
         err instanceof Error
           ? err.message
-          : "Something went wrong. Please try again."
+          : "Unable to login. Please try again."
       );
     } finally {
       setLoading(false);
@@ -101,37 +99,25 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="login-page">
+    <main className="auth-page login-page">
+      <div className="auth-container">
 
-      <div className="login-shell">
+        {/* Brand panel */}
+        <section className="auth-brand-panel">
+          <div className="auth-brand-content">
 
-        {/* =================================================
-            LEFT BRAND PANEL
-            ================================================= */}
+            <Link href="/" className="auth-brand-logo">
+              <span className="auth-brand-mark">D</span>
 
-        <section className="login-brand-panel">
-
-          <div className="login-brand-content">
-
-            {/* Brand */}
-            <Link
-              href="/"
-              className="login-brand"
-              aria-label="DriveEase home"
-            >
-              <span className="login-brand-icon">
-                <CarFront size={22} />
+              <span>
+                <strong>DriveEase</strong>
+                <small>Car Rental Management</small>
               </span>
-
-              <span>DriveEase</span>
             </Link>
 
-            {/* Main message */}
-            <div className="login-brand-message">
-
-              <span className="login-brand-badge">
-                <ShieldCheck size={15} />
-                Secure & Reliable
+            <div className="auth-brand-copy">
+              <span className="auth-eyebrow">
+                Welcome back
               </span>
 
               <h1>
@@ -141,221 +127,123 @@ export default function LoginPage() {
               </h1>
 
               <p>
-                Sign in to manage your bookings, explore
-                our fleet and keep your entire rental
-                journey organized in one place.
+                Sign in to manage your bookings, explore our
+                fleet, and enjoy a seamless rental experience.
               </p>
+            </div>
 
-              {/* Benefits */}
-              <div className="login-benefits">
-
+            <div className="auth-benefits">
+              <div className="auth-benefit">
+                <ShieldCheck size={20} />
                 <div>
-                  <span>
-                    <Check size={14} />
-                  </span>
-
-                  <div>
-                    <strong>
-                      Manage your bookings
-                    </strong>
-
-                    <small>
-                      View and manage every reservation
-                    </small>
-                  </div>
+                  <strong>Secure account</strong>
+                  <span>Your account is protected</span>
                 </div>
-
-                <div>
-                  <span>
-                    <Check size={14} />
-                  </span>
-
-                  <div>
-                    <strong>
-                      Explore our fleet
-                    </strong>
-
-                    <small>
-                      Find the right vehicle for your journey
-                    </small>
-                  </div>
-                </div>
-
-                <div>
-                  <span>
-                    <Check size={14} />
-                  </span>
-
-                  <div>
-                    <strong>
-                      Track rental activity
-                    </strong>
-
-                    <small>
-                      Keep your rental information organized
-                    </small>
-                  </div>
-                </div>
-
               </div>
 
+              <div className="auth-benefit">
+                <Lock size={20} />
+                <div>
+                  <strong>Easy booking</strong>
+                  <span>Reserve your vehicle quickly</span>
+                </div>
+              </div>
             </div>
-
-            <p className="login-brand-footer">
-              Simple booking. Better journeys.
-            </p>
 
           </div>
-
         </section>
 
-        {/* =================================================
-            RIGHT LOGIN PANEL
-            ================================================= */}
+        {/* Login panel */}
+        <section className="auth-form-panel">
 
-        <section className="login-form-panel">
+          <div className="auth-form-wrapper">
 
-          <div className="login-form-container">
+            <div className="auth-mobile-brand">
+              <Link href="/" className="auth-brand-logo">
+                <span className="auth-brand-mark">D</span>
 
-            {/* Mobile logo */}
-            <div className="login-mobile-brand">
-
-              <Link
-                href="/"
-                className="login-brand"
-              >
-                <span className="login-brand-icon">
-                  <CarFront size={21} />
+                <span>
+                  <strong>DriveEase</strong>
+                  <small>Car Rental Management</small>
                 </span>
-
-                <span>DriveEase</span>
               </Link>
-
             </div>
 
-            {/* Header */}
-            <div className="login-form-header">
-
-              <span className="login-kicker">
-                WELCOME BACK
+            <div className="auth-heading">
+              <span className="auth-eyebrow">
+                Account access
               </span>
 
-              <h2>
-                Sign in to your account
-              </h2>
+              <h2>Sign in to DriveEase</h2>
 
               <p>
-                Enter your credentials to continue
-                to DriveEase.
+                Enter your credentials to continue.
               </p>
-
             </div>
 
-            {/* Error */}
             {error && (
-              <div
-                className="login-error"
-                role="alert"
-              >
-                <div className="login-error-icon">
-                  !
-                </div>
-
-                <div>
-                  <strong>
-                    Unable to sign in
-                  </strong>
-
-                  <p>{error}</p>
-                </div>
+              <div className="auth-error" role="alert">
+                <strong>Login failed</strong>
+                <span>{error}</span>
               </div>
             )}
 
-            {/* Form */}
             <form
               onSubmit={handleSubmit}
-              className="login-form"
+              className="auth-form"
             >
 
-              {/* Email */}
-              <div className="login-field">
-
+              <div className="auth-field">
                 <label htmlFor="email">
-                  Email Address
+                  Email address
                 </label>
 
-                <div className="login-input-wrap">
-
-                  <Mail
-                    size={18}
-                    className="login-input-icon"
-                    aria-hidden="true"
-                  />
+                <div className="auth-input-wrap">
+                  <Mail size={18} />
 
                   <input
                     id="email"
-                    name="email"
                     type="email"
                     value={email}
-                    onChange={(event) => {
-                      setEmail(event.target.value);
-                      setError("");
-                    }}
-                    required
-                    autoComplete="email"
+                    onChange={(e) =>
+                      setEmail(e.target.value)
+                    }
                     placeholder="you@example.com"
+                    autoComplete="email"
                     disabled={loading}
                   />
-
                 </div>
-
               </div>
 
-              {/* Password */}
-              <div className="login-field">
+              <div className="auth-field">
+                <label htmlFor="password">
+                  Password
+                </label>
 
-                <div className="login-label-row">
-
-                  <label htmlFor="password">
-                    Password
-                  </label>
-
-                </div>
-
-                <div className="login-input-wrap">
-
-                  <LockKeyhole
-                    size={18}
-                    className="login-input-icon"
-                    aria-hidden="true"
-                  />
+                <div className="auth-input-wrap">
+                  <Lock size={18} />
 
                   <input
                     id="password"
-                    name="password"
                     type={
                       showPassword
                         ? "text"
                         : "password"
                     }
                     value={password}
-                    onChange={(event) => {
-                      setPassword(event.target.value);
-                      setError("");
-                    }}
-                    required
-                    autoComplete="current-password"
+                    onChange={(e) =>
+                      setPassword(e.target.value)
+                    }
                     placeholder="Enter your password"
+                    autoComplete="current-password"
                     disabled={loading}
                   />
 
                   <button
                     type="button"
-                    className="login-password-toggle"
+                    className="auth-password-toggle"
                     onClick={() =>
-                      setShowPassword(
-                        !showPassword
-                      )
+                      setShowPassword((value) => !value)
                     }
                     aria-label={
                       showPassword
@@ -370,54 +258,40 @@ export default function LoginPage() {
                       <Eye size={18} />
                     )}
                   </button>
-
                 </div>
-
               </div>
 
-              {/* Submit */}
               <button
                 type="submit"
-                className="login-submit"
+                className="btn btn-primary auth-submit"
                 disabled={loading}
               >
                 {loading ? (
                   <>
-                    <span className="login-spinner" />
+                    <span className="auth-spinner" />
                     Signing in...
                   </>
                 ) : (
-                  <>
-                    Sign In
-                    <ArrowRight size={18} />
-                  </>
+                  "Sign In"
                 )}
               </button>
 
             </form>
 
-            {/* Register */}
-            <div className="login-register">
-
-              <span>
-                Don't have an account?
-              </span>
+            <div className="auth-footer">
+              <span>Don't have an account?</span>
 
               <Link href="/register">
                 Create an account
               </Link>
-
             </div>
 
-            {/* Security */}
-            <div className="login-security">
-
-              <ShieldCheck size={15} />
+            <div className="auth-security">
+              <ShieldCheck size={16} />
 
               <span>
-                Your account information is securely handled.
+                Your information is securely processed.
               </span>
-
             </div>
 
           </div>
@@ -425,7 +299,34 @@ export default function LoginPage() {
         </section>
 
       </div>
-
     </main>
+  );
+}
+
+/*
+ * IMPORTANT:
+ * useSearchParams() is inside LoginContent.
+ * LoginContent is rendered inside Suspense.
+ */
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="auth-page login-page">
+          <div className="auth-container">
+            <section className="auth-form-panel">
+              <div className="auth-form-wrapper">
+                <div className="auth-loading">
+                  <div className="auth-loading-spinner" />
+                  <p>Loading login...</p>
+                </div>
+              </div>
+            </section>
+          </div>
+        </main>
+      }
+    >
+      <LoginContent />
+    </Suspense>
   );
 }

@@ -18,26 +18,28 @@ import {
 
 import CarCard from "@/components/CarCard";
 import { getCars } from "@/lib/api";
+import type { Car } from "@/lib/data";
 
-type Car = {
-  id: number;
-  brand: string;
-  model: string;
-  category: string;
-  seats: number;
-  transmission: string;
-  fuel: string;
-  price: number;
-  year: number;
-  location: string;
+type CarStatus =
+  | "available"
+  | "booked"
+  | "maintenance"
+  | "inactive";
+
+type ApiCar = Omit<Car, "image"> & {
   image_url: string;
-  description?: string;
-  features?: string[] | string;
-  status: "available" | "booked" | "maintenance" | "inactive";
+  description?: string | null;
+  status: CarStatus;
 };
 
+type DisplayCar = Car & {
+  status: CarStatus;
+};
+
+
+
 export default function HomePage() {
-  const [cars, setCars] = useState<Car[]>([]);
+  const [cars, setCars] = useState<DisplayCar[]>([]);
   const [loadingCars, setLoadingCars] = useState(true);
   const [carsError, setCarsError] = useState("");
 
@@ -51,11 +53,14 @@ export default function HomePage() {
         setLoadingCars(true);
         setCarsError("");
 
-        const data = await getCars();
+        const data = (await getCars()) as ApiCar[];
 
-        const activeCars = data.filter(
-          (car: Car) => car.status !== "inactive"
-        );
+        const activeCars: DisplayCar[] = data
+          .filter((car) => car.status !== "inactive")
+          .map((car) => ({
+            ...car,
+            image: car.image_url,
+          }));
 
         setCars(activeCars);
       } catch (error) {

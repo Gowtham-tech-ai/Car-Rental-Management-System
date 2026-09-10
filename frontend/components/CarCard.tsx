@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Fuel, Settings2, Users } from "lucide-react";
-type Car = {
+
+type CarCardData = {
   id: number;
   brand: string;
   model: string;
@@ -11,34 +12,48 @@ type Car = {
   price: number;
   year: number;
   location: string;
-  image_url: string;
-  description: string | null;
-  features: string[];
-  status: string;
+
+  // Frontend display image
+  image: string;
+
+  // API/database fields
+  image_url?: string;
+  description?: string | null;
+  features?: string[] | string;
+
+  status?: "available" | "booked" | "maintenance" | "inactive";
 };
 
-export default function CarCard({ car }: { car: Car }) {
+export default function CarCard({
+  car,
+}: {
+  car: CarCardData;
+}) {
+  const imageSource = car.image || car.image_url || "";
+
+  const isAvailable =
+    !car.status ||
+    car.status === "available";
+
   return (
     <article className="car-card">
-
-      <Link href={`/cars/${car.id}`} className="car-image-link">
-
+      <Link
+        href={`/cars/${car.id}`}
+        className="car-image-link"
+      >
         <img
-          src={car.image_url}
+          src={imageSource}
           alt={`${car.brand} ${car.model}`}
           className="car-image"
         />
 
         <span className="availability">
-          Available
+          {isAvailable ? "Available" : "Unavailable"}
         </span>
-
       </Link>
 
       <div className="car-body">
-
         <div className="car-top">
-
           <div>
             <span className="car-category">
               {car.category}
@@ -50,14 +65,12 @@ export default function CarCard({ car }: { car: Car }) {
           </div>
 
           <div className="car-price">
-            ₹{car.price}
+            ₹{Number(car.price).toLocaleString("en-IN")}
             <small>/day</small>
           </div>
-
         </div>
 
         <div className="car-meta">
-
           <span>
             <Users size={15} />
             {car.seats}
@@ -72,7 +85,6 @@ export default function CarCard({ car }: { car: Car }) {
             <Fuel size={15} />
             {car.fuel}
           </span>
-
         </div>
 
         <Link
@@ -81,9 +93,7 @@ export default function CarCard({ car }: { car: Car }) {
         >
           View Details
         </Link>
-
       </div>
-
     </article>
   );
 }

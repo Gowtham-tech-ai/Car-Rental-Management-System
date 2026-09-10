@@ -394,9 +394,8 @@ export default function AdminBookingsPage() {
                       {booking.brand} {booking.model}
                     </strong>
                     <small>
-                      {booking.year
-                        ? `Model year ${booking.year}`
-                        : `${booking.seats} seats · ${booking.transmission}`}
+                      {booking.seats} seats · {booking.transmission} ·{" "}
+                      {booking.fuel}
                     </small>
                   </div>
                 </div>
