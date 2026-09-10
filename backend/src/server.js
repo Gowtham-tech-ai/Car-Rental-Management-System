@@ -13,9 +13,28 @@ const adminUserRoutes = require("./routes/adminUserRoutes");
 
 const app = express();
 
+// CORS configuration
+const allowedOrigins = [
+  "http://localhost:3000",
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: function (origin, callback) {
+      // Allow requests without an Origin header
+      // such as server-to-server requests and health checks.
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
   })
 );
 
@@ -44,14 +63,11 @@ app.get("/api/db-test", async (req, res) => {
 app.use("/api/cars", carRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/auth", authRoutes);
+
 app.use("/api/admin", adminRoutes);
-app.use(
-  "/api/admin/bookings",
-  adminBookingRoutes
-);
+app.use("/api/admin/bookings", adminBookingRoutes);
 app.use("/api/admin/cars", adminCarRoutes);
 app.use("/api/admin/users", adminUserRoutes);
-
 
 const PORT = process.env.PORT || 5000;
 
