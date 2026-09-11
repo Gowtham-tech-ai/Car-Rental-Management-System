@@ -95,7 +95,11 @@ export default function DashboardPage() {
         return;
       }
 
-      const response = await fetch("http://localhost:5000/api/bookings/my", {
+      const API_URL =
+      process.env.NEXT_PUBLIC_API_URL ||
+      "http://localhost:5000/api";
+      
+      const response = await fetch(`${API_URL}/bookings/my`, {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
         cache: "no-store",
