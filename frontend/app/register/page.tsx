@@ -18,7 +18,9 @@ import {
   X,
 } from "lucide-react";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://localhost:5000/api";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -127,7 +129,7 @@ export default function RegisterPage() {
           },
           body: JSON.stringify({
             name: name.trim(),
-            email: email.trim(),
+            email: email.trim().toLowerCase(),
             phone: phone.trim(),
             password,
           }),
