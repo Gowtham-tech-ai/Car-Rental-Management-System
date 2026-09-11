@@ -69,6 +69,10 @@ const statusLabels: Record<string, string> = {
   cancelled: "Cancelled",
 };
 
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://localhost:5000/api";
+
 export default function AdminBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,7 +104,7 @@ export default function AdminBookingsPage() {
       }
 
       const response = await fetch(
-        "http://localhost:5000/api/admin/bookings",
+        `${API_URL}/admin/bookings`,
         {
           method: "GET",
           headers: {
@@ -150,7 +154,7 @@ export default function AdminBookingsPage() {
       }
 
       const response = await fetch(
-        `http://localhost:5000/api/admin/bookings/${bookingId}/status`,
+        `${API_URL}/admin/bookings/${bookingId}/status`,
         {
           method: "PATCH",
           headers: {
